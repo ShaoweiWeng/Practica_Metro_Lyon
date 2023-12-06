@@ -91,38 +91,33 @@ def algoritmoAStar(Inicio,Destino):
    nodoInicio = Nodo(estacioInicio)
    nodoDestino = Nodo(estacionDestino)
    nodoActual = nodoInicio
+   nodoActual.f = heuristica.get(Inicio)
    listaNodoAbierto.update({estacioInicio["name"]:nodoActual})
    
    while(listaNodoAbierto):
-      # seleccionar el nodo con f menor y elimian de la lista abierto añadir en la lista cerrado
-      nodoActual = getNodoMinimo(listaNodoAbierto)
-      listaNodoCerrado.update({nodoActual.estacion["name"]:nodoActual})
-      del listaNodoAbierto[nodoActual.estacion["name"]]
-      explorarVecino(grafo,heuristica,listaNodoAbierto,listaNodoCerrado,nodoActual)
-      nodo = hayDestinoEnListaNodoAbierto(listaNodoAbierto,estacionDestino)
-      
-      if nodo != None:
-         coste = nodo.g
-      while nodo != None:
-         ruta.append(nodo.estacion["name"])
-         indice_nodo = grafo.vs.find(name=(nodo.estacion["name"])).index
-         grafo.vs[indice_nodo]["color"] = 'green'
-         if nodo.padre != None:
-            indiceArista = grafo.get_eid(nodo.estacion,nodo.padre.estacion)
-            grafo.es[indiceArista]["width"] = 3.0
-         nodo = nodo.padre
-         listaNodoAbierto={}
+   # seleccionar el nodo con f menor y elimian de la lista abierto añadir en la lista cerrado
+      print(nodoActual.estacion["name"])
+      print(nodoActual.f)
+      print(nodoActual.g)
+      print(nodoActual.h)
+      print("----------")
+      if nodoActual.estacion == nodoDestino.estacion:
+         coste = nodoActual.f
+         ruta.append(nodoActual.estacion["name"])
+         nodo = nodoActual.padre
+         while(nodo):
+            ruta.append(nodo.estacion["name"])
+            nodo = nodo.padre
+         listaNodoAbierto = {}
+      else:
+         listaNodoCerrado.update({nodoActual.estacion["name"]:nodoActual})
+         del listaNodoAbierto[nodoActual.estacion["name"]]
+         explorarVecino(grafo,heuristica,listaNodoAbierto,listaNodoCerrado,nodoActual)
+         nodoActual = getNodoMinimo(listaNodoAbierto)
 
    for estacion in reversed(ruta):
       print(estacion)
    print("coste de distancia es {:.1f}km".format(coste))
-
-def hayDestinoEnListaNodoAbierto(listaNodoAbierto,estacionDestino):
-    for estacion in listaNodoAbierto:
-        nodo = listaNodoAbierto.get(estacion)
-        if nodo.estacion == estacionDestino:
-            return nodo
-    return None
 
 #metodo que devuelve un nodo con f menor en la lista de nodo abierto 
 def getNodoMinimo(listaNodoAbierto):
