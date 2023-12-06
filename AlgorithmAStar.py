@@ -27,7 +27,6 @@ with open('estaciones.csv', mode='r') as file:
         y = (float)(row[4]) # Coordenadas Y
         coordenada.update({row[1]:[x,y]})
 
-
 with open('aristas.csv', mode='r') as file:
     # Crea un lector CSV
     reader = csv.reader(file)
@@ -66,9 +65,10 @@ grafo.vs["name"] = nombre   # Nombre de los nodos
 grafo.es["pesos"] = pesos   # Pesos de las arista
 grafo.vs["color"] = ['red','red','red','red','red','red','red', 'red','red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red']
 grafo.vs["label"] = nombre
-grafo.vs["size"] = 70
-grafo.vs["label_dist"] = 1.5
-grafo.vs["label_size"] = 20
+grafo.vs["size"] = 35
+grafo.vs["label_dist"] = 1.1
+grafo.vs["label_size"] = 13
+
 
 class Nodo:     
     def __init__(self, estacion, g = 0, h = 0):  
@@ -77,7 +77,7 @@ class Nodo:
         self.g = g                 #valor g
         self.h = h                 #valor h
         self.f = 0                 #valor f
-  
+
 
 def algoritmoAStar(Inicio,Destino):
    # inicialización de variable
@@ -104,13 +104,23 @@ def algoritmoAStar(Inicio,Destino):
       if nodoActual.estacion == nodoDestino.estacion:
          coste = nodoActual.f
          ruta.append(nodoActual.estacion["name"])
+
+         indice_nodo = grafo.vs.find(name=(nodoActual.estacion["name"])).index
+         grafo.vs[indice_nodo]["color"] = 'green'
+
          nodo = nodoActual.padre
          while(nodo):
+            indice_nodo = grafo.vs.find(name=(nodo.estacion["name"])).index
+            grafo.vs[indice_nodo]["color"] = 'green'
             ruta.append(nodo.estacion["name"])
             nodo = nodo.padre
          listaNodoAbierto = {}
       else:
          listaNodoCerrado.update({nodoActual.estacion["name"]:nodoActual})
+
+         indice_nodo = grafo.vs.find(name=(nodoActual.estacion["name"])).index
+         grafo.vs[indice_nodo]["color"] = 'yellow'
+
          del listaNodoAbierto[nodoActual.estacion["name"]]
          explorarVecino(grafo,heuristica,listaNodoAbierto,listaNodoCerrado,nodoActual)
          nodoActual = getNodoMinimo(listaNodoAbierto)
@@ -118,6 +128,7 @@ def algoritmoAStar(Inicio,Destino):
    for estacion in reversed(ruta):
       print(estacion)
    print("coste de distancia es {:.1f}km".format(coste))
+
 
 #metodo que devuelve un nodo con f menor en la lista de nodo abierto 
 def getNodoMinimo(listaNodoAbierto):
@@ -127,7 +138,9 @@ def getNodoMinimo(listaNodoAbierto):
         if nodo.f < menor:  
             nodoMenor = nodo
             menor =  nodo.f 
-        return nodoMenor
+    return nodoMenor
+
+
 
 #exploral todos los nodos vecino de nodo actual y calcuar la f 
 def explorarVecino(grafo:igraph,heuristica,listaNodoAbierto,listaNodoCerrado,nodoActual):
@@ -154,6 +167,7 @@ def explorarVecino(grafo:igraph,heuristica,listaNodoAbierto,listaNodoCerrado,nod
         else:
              listaNodoAbierto.update({estacion["name"]:nodo})
 
+
 app = tk.Tk()
 origen = tk.StringVar(app)
 destino = tk.StringVar(app) 
@@ -162,7 +176,6 @@ def boton():
     inicio = origen.get()
     final = destino.get()
     algoritmoAStar(inicio, final)
-
     # Eliminar el gráfico existente
     subplot.clear()
 
@@ -171,7 +184,7 @@ def boton():
 
     # Actualizar el lienzo
     canvas.draw()
-    
+
 app.geometry("1920x1080")
 app.configure(background="black")
 tk.Wm.wm_title(app,"A*")
