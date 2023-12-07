@@ -115,9 +115,11 @@ class AutoCanvasUpdaterApp:
     """" separador """
     def construirGrafo(self):
         self.grafo = igraph.Graph(len(self.nombreEstacion),self.aristas)
+        print(self.aristas)
         self.grafo["title"] = "Metro de Lyon" # Titulo del grafo
         self.grafo.vs["name"] = self.nombreEstacion   # Nombre de los nodos
         self.grafo.es["pesos"] = self.pesos   # Pesos de las arista   
+        self.grafo.es["color"] = ['red','red','red','green','green','red','red', 'yellow','red','red','red','blue','red','red','red', 'red', 'red','blue','blue','blue','blue','green','green','blue', 'blue','blue','blue','yellow','yellow','yellow','green', 'green', 'green','green','green','green','green','green','green', 'green', 'green','green','green','green','green','green','green', 'green']
         self.grafo.vs["color"] = self.color
         self.grafo.vs["label"] = self.nombreEstacion
         self.grafo.vs["size"] = 15
@@ -276,7 +278,7 @@ def boton():
                 app.algoritmoAStar(inicio, final)
                 app.ejec = False
         else:
-            messagebox.showinfo("Mensaje", f"selecciona Origen y Destino")
+            messagebox.showinfo("Mensaje", f"Selecciona Origen y Destino")
 
 
 def restart():
