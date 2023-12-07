@@ -1,5 +1,4 @@
-
-from tkinter import ttk
+from tkinter import messagebox, ttk
 import igraph 
 from igraph import* 
 import csv
@@ -11,6 +10,7 @@ from matplotlib.figure import Figure
 import tkinter as tk
 import random
 from igraph.drawing.text import *
+from tkinter import scrolledtext
 
 class Nodo:     
     def __init__(self, estacion, g = 0, h = 0):  
@@ -28,29 +28,33 @@ class AutoCanvasUpdaterApp:
     heuristica={}
     aristas = []
     pesos = []
-    origen=None
-    destino=None
+   
     ejec = False
     res = True
     color = []
-    def __init__(self, master):
+    def __init__(self, master,canvas,frame,output_box):
+         
+        self.master = master
+        self.canvas = canvas
+        self.frame = frame
+        self.output_box = output_box
+        
+        self.imprime("procesando datos")
         self.readFileEstacion()
         self.readFileArista()
         self.construirGrafo()
 
-        self.master = master
-        self.master.title("A star ")
+      
 
-        self.master.geometry("1920x1080")
-        self.master.configure(background="black")
+        tk.Label(self.frame, text="ORIGEN:").pack(side=tk.LEFT)
+        self.cBoxOrigen = ttk.Combobox(self.frame, values=self.nombreEstacion)
+        self.cBoxOrigen.pack(side=tk.LEFT, padx=10)
+       
+        tk.Label(self.frame, text="DESTINO:").pack(side=tk.LEFT)
+        self.cBoxDestino = ttk.Combobox(self.frame, values=self.nombreEstacion)
+        self.cBoxDestino.pack(side=tk.LEFT, padx=10)
 
-        # Crear un lienzo
-        frame = tk.Frame(self.master)
-        frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
-        self.canvas = tk.Canvas(frame, bg="white")
-        self.canvas.pack(expand=True, fill=tk.BOTH)
-        
         # Inicializar el contenido del lienzo
         self.igraph_plot = Plot()
         self.igraph_plot.add(self.grafo, layout="kk")
@@ -64,7 +68,7 @@ class AutoCanvasUpdaterApp:
     def auto_update_canvas(self):
         
         self.canvas.delete("all")
-        igraph_plot = plot(self.grafo, bbox=(1, 2, 1000, 800), margin=50)
+        igraph_plot = plot(self.grafo, bbox=(1, 2, 1000, 870), margin=50)
         igraph_plot.save("graph_plot.png")
         image = tk.PhotoImage(file="graph_plot.png")
         self.canvas.create_image(0, 0, anchor=tk.NW, image=image)
@@ -116,8 +120,8 @@ class AutoCanvasUpdaterApp:
         self.grafo.es["pesos"] = self.pesos   # Pesos de las arista   
         self.grafo.vs["color"] = self.color
         self.grafo.vs["label"] = self.nombreEstacion
-        self.grafo.vs["size"] = 35
-        self.grafo.vs["label_dist"] = 1.1
+        self.grafo.vs["size"] = 15
+        self.grafo.vs["label_dist"] = self.pesos
         self.grafo.vs["label_size"] = 13
     """" separador """
     def algoritmoAStar(self,Inicio,Destino):
@@ -140,11 +144,11 @@ class AutoCanvasUpdaterApp:
             index=self.nombreEstacion.index(nodoActual.estacion["name"])
             self.grafo.vs[index]["color"] = "black"
 
-            #print(nodoActual.estacion["name"])
-            #print(nodoActual.f)
-            #print(nodoActual.g)
-            #print(nodoActual.h)
-            #print("----------")
+            self.imprime("nodo actual: "+nodoActual.estacion["name"]+"\n")
+            self.imprime("g: "+str(nodoActual.g)+" ")
+            self.imprime("f: "+str(nodoActual.f)+" ")
+            self.imprime("h: "+str(nodoActual.h))
+            self.imprime("\n")
 
             self.auto_update_canvas()
             self.master.update()
@@ -174,9 +178,15 @@ class AutoCanvasUpdaterApp:
                     self.master.update()
 
                     nodo = nodo.padre
+                self.imprime("\n")
+                self.imprime("El camino optimo es: \n")
+                for estacion in reversed(ruta):
+                     self.imprime(estacion+"\n")
+                self.imprime("\n")
+                self.imprime("Distancia total: " + str(round(coste,2))+ " Km\n")
+
                 return ruta,coste
             else:
-                
                 listaNodoCerrado.update({nodoActual.estacion["name"]:nodoActual})
                 del listaNodoAbierto[nodoActual.estacion["name"]]
                 self.explorarVecino(listaNodoAbierto,listaNodoCerrado,nodoActual)
@@ -218,20 +228,63 @@ class AutoCanvasUpdaterApp:
             else:
                 listaNodoAbierto.update({estacion["name"]:nodo})
 
+    def resetCombobox(self):
+        self.cBoxDestino.set("")
+        self.cBoxOrigen.set("")
+    
+    def pintarOrigen(self,event):
+       
+        if("pink" in self.color):
+            indexC = self.color.index("pink")
+            self.color[indexC] = "red"
+        origen=self.cBoxOrigen.get()
+        index = self.nombreEstacion.index(origen)
+        self.color[index] = "pink"
+        self.grafo.vs["color"] = self.color
+        self.auto_update_canvas()
+    
+    def pintarDestino(self,event):
+       
+        if("orange" in self.color):
+            indexC = self.color.index("orange")
+            self.color[indexC] = "red"
+        origen=self.cBoxDestino.get()
+        index = self.nombreEstacion.index(origen)
+        self.color[index] = "orange"
+        self.grafo.vs["color"] = self.color
+        self.auto_update_canvas()
+    
+    def imprime(self,texto):
+        self.output_box.config(state=tk.NORMAL)  
+        self.output_box.insert(tk.END, texto)
+        self.output_box.config(state=tk.DISABLED)
+    def clear(self):
+        # Restablecer el contenido del Text widget (borrar todo el contenido)
+        self.output_box.config(state=tk.NORMAL)  # Configurarlo como editable
+        self.output_box.delete("1.0", tk.END)  # Borrar desde la línea 1, carácter 0 hasta el final
+        self.output_box.config(state=tk.DISABLED)
+
 def boton():
-        inicio = origen.get()
-        final =  destino.get()
-        if (app.res and (not app.ejec)) : 
-            app.res = False
-            app.ejec = True
-            app.algoritmoAStar(inicio, final)
-            app.ejec = False
+        inicio = app.cBoxOrigen.get()
+        final =  app.cBoxDestino.get()
+        app.grafo.vs["color"] = app.color
+        if inicio and final: 
+            if (app.res and (not app.ejec)) :
+                app.clear()
+                app.res = False
+                app.ejec = True
+                app.algoritmoAStar(inicio, final)
+                app.ejec = False
+        else:
+            messagebox.showinfo("Mensaje", f"selecciona Origen y Destino")
+
 
 def restart():
         if(not app.ejec):
             app.res = True
             app.draw_initial_content()
-
+            app.resetCombobox()
+            app.color=['red','red','red','red','red','red','red', 'red','red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red', 'red','red','red','red','red','red','red', 'red']
 
 def obtenerNombre():
     with open('estaciones.csv', mode='r') as file:
@@ -246,24 +299,28 @@ def obtenerNombre():
             # Agrega el valor de la columna "Estacion" a la lista
             nombre.append(row[1])
     return nombre
-    
 
 if __name__ == "__main__":
     root = tk.Tk()
     origen = tk.StringVar(root)
-    destino = tk.StringVar(root) 
+    destino = tk.StringVar(root)
+    root.title("A star ")
+    root.geometry("2560x1664")
+    root.configure(background="black")
+    frame = tk.Frame(root)
+    frame.pack(side=tk.BOTTOM, expand=True, fill=tk.BOTH)
+    canvas = tk.Canvas(frame, bg="white")
+    canvas.pack(side=tk.LEFT,expand=True, fill=tk.BOTH)
+    output_box = scrolledtext.ScrolledText(root, height=56, width=60, state=tk.DISABLED)
+    output_box = tk.Text(frame, height=56, width=60, state=tk.DISABLED)
+    output_box.pack(side=tk.RIGHT)
 
     frame = tk.Frame(root)
     frame.pack(side=tk.TOP, fill=tk.BOTH)
-
-    nombre = obtenerNombre()
     
-    tk.Button(frame,text="START!",font=("Courier", 14),bg="#00a8e8",fg="blue",command=boton,height=2,width=15).pack(side=tk.LEFT)
-    tk.Button(frame,text="RESTART!",font=("Courier", 14),bg="#00a8e8",fg="blue",command=restart,height=2,width=15).pack(side=tk.LEFT)
-    tk.Label(frame, text="ORIGEN:").pack(side=tk.LEFT)
-    ttk.Combobox(frame,textvariable=origen, values=nombre).pack(side=tk.LEFT)
-    tk.Label(frame, text="DESTINO:").pack(side=tk.LEFT)
-    ttk.Combobox(frame,textvariable=destino, values=nombre).pack(side=tk.LEFT)
-
-    app = AutoCanvasUpdaterApp(root)
+    bStar=tk.Button(frame,text="START!",font=("Courier", 14),bg="#00a8e8",fg="blue",command=boton,height=2,width=15).pack(side=tk.LEFT)
+    bRestar = tk.Button(frame,text="RESTART!",font=("Courier", 14),bg="#00a8e8",fg="blue",command=restart,height=2,width=15).pack(side=tk.LEFT)
+    app = AutoCanvasUpdaterApp(root,canvas,frame,output_box)
+    app.cBoxOrigen.bind("<<ComboboxSelected>>", app.pintarOrigen)
+    app.cBoxDestino.bind("<<ComboboxSelected>>", app.pintarDestino)
     root.mainloop()
